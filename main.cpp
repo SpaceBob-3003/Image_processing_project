@@ -1,5 +1,44 @@
 #include "Processing.h"
 
+void histDisplay(int histogram[], const char* name)
+{
+    int hist[256];
+    for(int i = 0; i < 256; i++)
+    {
+        hist[i]=histogram[i];
+    }
+    // draw the histograms
+    int hist_w = 512; int hist_h = 400;
+    int bin_w = cvRound((double) hist_w/256);
+ 
+    cv::Mat histImage(hist_h, hist_w, CV_8UC1, cv::Scalar(255, 255, 255));
+ 
+    // find the maximum intensity element from histogram
+    int max = hist[0];
+    for(int i = 1; i < 256; i++){
+        if(max < hist[i]){
+            max = hist[i];
+        }
+    }
+
+    // normalize the histogram between 0 and histImage.rows
+    for(int i = 0; i < 256; i++)
+    {
+        hist[i] = ((double)hist[i]/max)*histImage.rows;
+    }
+ 
+ 
+    // draw the intensity line for histogram
+    for(int i = 0; i < 256; i++)
+    {
+        cv::line(histImage, cv::Point(bin_w*(i), hist_h), cv::Point(bin_w*(i), hist_h - hist[i]), cv::Scalar(0,0,0), 1, 8, 0);
+    }
+ 
+    // display histogram
+    cv::namedWindow(name);
+    cv::imshow(name, histImage);
+}
+
 int main()
 {
     Processing proc;
@@ -89,7 +128,14 @@ int main()
     cv::Mat imgCropped;
     cv::getRectSubPix(imgRotated, rectSize, center, imgCropped);
 
-    proc.displayImage(imgCropped, "Image Recadrée", cv::WINDOW_AUTOSIZE, 4);
+    cv::Mat CroppedHSV;
+    cv::Mat CroppedH;
+    cv::Mat CroppedS;
+    cv::Mat CroppedV;
+
+    proc.bgrToHsv(imgCropped, CroppedHSV, CroppedH, CroppedS, CroppedV);
+
+
 
     std::vector<cv::Point> rectContour;
     for (int j = 0; j < 4; j++) {
@@ -109,13 +155,23 @@ int main()
         cv::drawContours(imgContours, contours, static_cast<int>(i), color, 2);
     }
 
+    proc.displayImage(imgCropped, "Image Recadrée", cv::WINDOW_AUTOSIZE, 1);
+
+    proc.displayImage(CroppedH, "Canal H de l'image recadrée", cv::WINDOW_AUTOSIZE, 1);
+
+    proc.displayImage(CroppedS, "Canal S de l'image recadrée", cv::WINDOW_AUTOSIZE, 1);
+
+    proc.displayImage(CroppedV, "Canal V de l'image recadrée", cv::WINDOW_AUTOSIZE, 1);
+
+
+    /*
     proc.displayImage(imgThresh, "Image seuillée", cv::WINDOW_AUTOSIZE, 4);
 
     proc.displayImage(imgB, "Image floutée", cv::WINDOW_AUTOSIZE, 4);
 
     proc.displayImage(imgContours, "Contours", cv::WINDOW_AUTOSIZE, 4);
 
-    proc.displayImage(img, "Image avec BoundingBox", cv::WINDOW_AUTOSIZE, 4);
+    proc.displayImage(img, "Image avec BoundingBox", cv::WINDOW_AUTOSIZE, 4);*/
 
 
     cv::waitKey(0);
